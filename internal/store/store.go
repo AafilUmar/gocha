@@ -19,13 +19,30 @@ mu sync.RWMutex
 
 
 func Gocha() *Cache  {
-
-return &Cache{
+c := &Cache{
 	data : make(map[string]item),
 }
+c.startCleaner(5*time.Second)
+return c
 }
 
+func (c *Cache) startCleaner(interval time.Duration){
+ticker := time.NewTicker(interval)
 
+go func(){
+for range ticker.C {
+	c.mu.Lock()
+	for key, it := range c.data {
+		if !it.expiresAt.IsZero() && time.Now().After(it.expiresAt){
+		delete(c.data,key)
+		log.Print("Deleting the key:",key)
+	}
+	}
+	c.mu.Unlock()
+	}
+}()
+
+}
 func (c *Cache) Set(key string,value string, ttl time.Duration){
 	c.mu.Lock()
 	defer c.mu.Unlock()

@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"log"
 	"net"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AafilUmar/gocha/internal/store"
 )
@@ -74,7 +76,17 @@ func (s *Server) handleCommand(line string) string {
 		if len(parts) < 3 {
 			return "ERR usage : SET key value"
 		}
-		s.cache.Set(parts[1],parts[2],0)
+		expiryTime := 0
+		if len(parts) >3   {
+
+		val,err := strconv.Atoi(parts[3])
+
+		if err == nil {
+			expiryTime = val * int(time.Second)
+		}
+
+		}
+		s.cache.Set(parts[1],parts[2],time.Duration(expiryTime))
 		return "OK"
 		case "GET":
 		if len(parts) < 2 {
